@@ -72,16 +72,34 @@ public struct PackageDetailView: View {
                         Button(action: {
                             Task { await store.upgradePackage(item) }
                         }) {
-                            Label("Upgrade to \(item.latestVersion)", systemImage: "arrow.up.circle.fill")
+                            Label("\(store.tr("Upgrade to")) \(item.latestVersion)", systemImage: "arrow.up.circle.fill")
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.orange)
                         .disabled(store.isTaskRunning)
                     }
                     
+                    if store.ignoredOutdatedNames.contains(item.name) {
+                        Button(action: {
+                            store.unignorePackage(item.name)
+                        }) {
+                            Label(store.tr("Restore"), systemImage: "bell")
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.blue)
+                    } else if item.isOutdated {
+                        Button(action: {
+                            store.ignorePackage(item.name)
+                        }) {
+                            Label(store.tr("Ignore"), systemImage: "bell.slash")
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.gray)
+                    }
+                    
                     if !item.homepage.isEmpty, let url = URL(string: item.homepage) {
                         Link(destination: url) {
-                            Label("Homepage", systemImage: "safari")
+                            Label(store.tr("Homepage"), systemImage: "safari")
                         }
                         .buttonStyle(.bordered)
                     }

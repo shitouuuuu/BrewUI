@@ -87,6 +87,13 @@ public struct L10n {
             "Your Homebrew formulae and casks are running the latest releases.": "您的所有 Homebrew Formulae 和 Casks 均运行在最新发布版本。",
             "Check Again": "重新检测",
             "Upgrade": "升级",
+            "Ignore": "忽略此更新",
+            "Ignored": "已忽略更新",
+            "Unignore": "取消忽略",
+            "Restore": "恢复提示",
+            "Ignored Updates": "已忽略更新的软件包",
+            "ignored package(s)": "个已忽略升级提醒的软件包",
+            "No ignored packages": "暂无已忽略更新的软件包",
             
             // Search View
             "Search & Discover Packages": "搜索与探索软件包",

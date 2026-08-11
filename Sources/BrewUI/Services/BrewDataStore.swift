@@ -48,10 +48,40 @@ public final class BrewDataStore {
     }
 
     
+    public var ignoredOutdatedNames: Set<String> = {
+        if let saved = UserDefaults.standard.stringArray(forKey: "BrewUI_IgnoredOutdated") {
+            return Set(saved)
+        }
+        return []
+    }() {
+        didSet {
+            UserDefaults.standard.set(Array(ignoredOutdatedNames), forKey: "BrewUI_IgnoredOutdated")
+        }
+    }
+    
     public var formulae: [FormulaModel] = []
     public var casks: [CaskModel] = []
     public var allItems: [UnifiedPackageItem] = []
+    public var allOutdatedItems: [UnifiedPackageItem] = []
     public var outdatedItems: [UnifiedPackageItem] = []
+    public var ignoredOutdatedItems: [UnifiedPackageItem] = []
+    
+    public func ignorePackage(_ name: String) {
+        ignoredOutdatedNames.insert(name)
+        filterOutdatedLists()
+        appendLog("Ignored outdated updates for '\(name)'", type: .warning)
+    }
+    
+    public func unignorePackage(_ name: String) {
+        ignoredOutdatedNames.remove(name)
+        filterOutdatedLists()
+        appendLog("Restored outdated updates for '\(name)'", type: .info)
+    }
+    
+    private func filterOutdatedLists() {
+        outdatedItems = allOutdatedItems.filter { !ignoredOutdatedNames.contains($0.name) }
+        ignoredOutdatedItems = allOutdatedItems.filter { ignoredOutdatedNames.contains($0.name) }
+    }
     
     public var searchResults: [SearchResultItem] = []
     public var isSearching: Bool = false
@@ -150,14 +180,15 @@ public final class BrewDataStore {
                     let outdatedFormulaNames = Set((decoded.formulae ?? []).map { $0.name })
                     let outdatedCaskNames = Set((decoded.casks ?? []).map { $0.name })
                     
-                    self.outdatedItems = allItems.filter { item in
+                    self.allOutdatedItems = allItems.filter { item in
                         if item.type == .formula {
                             return outdatedFormulaNames.contains(item.name)
                         } else {
                             return outdatedCaskNames.contains(item.name)
                         }
                     }
-                    appendLog("Found \(self.outdatedItems.count) outdated package(s).", type: .warning)
+                    filterOutdatedLists()
+                    appendLog("Found \(self.allOutdatedItems.count) total outdated package(s) (\(self.ignoredOutdatedItems.count) ignored).", type: .warning)
                 }
             }
         } catch {
