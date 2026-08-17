@@ -176,13 +176,15 @@ public struct OutdatedCask: Codable, Identifiable, Sendable {
     public var id: String { name }
     
     public let name: String
-    public let installedVersions: String?
+    public let installedVersions: [String]?
     public let currentVersion: String?
+    public let pinned: Bool?
     
     enum CodingKeys: String, CodingKey {
         case name
         case installedVersions = "installed_versions"
         case currentVersion = "current_version"
+        case pinned
     }
 }
 
