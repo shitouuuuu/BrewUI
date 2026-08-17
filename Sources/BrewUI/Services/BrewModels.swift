@@ -122,6 +122,8 @@ public struct CaskModel: Codable, Identifiable, Sendable {
     public let homepage: String?
     public let version: String?
     public let installed: String?
+    public let bundleShortVersion: String?
+    public let bundleVersion: String?
     public let outdated: Bool?
     public let autoUpdates: Bool?
     
@@ -132,6 +134,8 @@ public struct CaskModel: Codable, Identifiable, Sendable {
         case homepage
         case version
         case installed
+        case bundleShortVersion = "bundle_short_version"
+        case bundleVersion = "bundle_version"
         case outdated
         case autoUpdates = "auto_updates"
     }
@@ -141,6 +145,9 @@ public struct CaskModel: Codable, Identifiable, Sendable {
     }
     
     public var currentVersionStr: String {
+        if let b = bundleShortVersion, !b.isEmpty {
+            return b
+        }
         return installed ?? "Not Installed"
     }
     
