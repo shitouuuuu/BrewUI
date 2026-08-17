@@ -25,8 +25,8 @@ public struct L10n {
         .chinese: [
             // Sidebar
             "Dashboard": "仪表盘概览",
-            "Formulae": "Formulae (命令行工具)",
-            "Casks": "Casks (Mac 桌面应用)",
+            "Formulae": "Formulae",
+            "Casks": "Casks",
             "Updates": "版本升级",
             "Search & Discover": "搜索与探索",
             "Maintenance & Health": "维护与环境诊断",
@@ -81,7 +81,6 @@ public struct L10n {
             
             // Updates View
             "Package Updates": "软件包升级中心",
-            "package(s) can be upgraded to newer versions.": "个软件包可升级至新版本。",
             "Upgrade All Packages": "一键升级全部软件包",
             "All Packages Up to Date": "所有软件包均为最新",
             "Your Homebrew formulae and casks are running the latest releases.": "您的所有 Homebrew Formulae 和 Casks 均运行在最新发布版本。",

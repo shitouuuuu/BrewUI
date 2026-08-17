@@ -1,18 +1,22 @@
 import Foundation
 
-public actor BrewCLIExecutor {
+public final class BrewCLIExecutor: @unchecked Sendable {
     public static let shared = BrewCLIExecutor()
     
     private var customBrewPath: String?
+    private let lock = NSLock()
     
     public init() {}
     
     public func setCustomBrewPath(_ path: String?) {
-        self.customBrewPath = path
+        lock.withLock {
+            self.customBrewPath = path
+        }
     }
     
     public func getBrewPath() -> String {
-        if let custom = customBrewPath, !custom.isEmpty, FileManager.default.isExecutableFile(atPath: custom) {
+        let custom = lock.withLock { self.customBrewPath }
+        if let custom = custom, !custom.isEmpty, FileManager.default.isExecutableFile(atPath: custom) {
             return custom
         }
         

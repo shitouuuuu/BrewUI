@@ -58,7 +58,7 @@ public struct SettingsView: View {
                         
                         Button(store.tr("Apply Custom Path")) {
                             Task {
-                                await BrewCLIExecutor.shared.setCustomBrewPath(customPathText)
+                                BrewCLIExecutor.shared.setCustomBrewPath(customPathText)
                                 await store.detectBrewPath()
                                 savedNotice = true
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -70,7 +70,7 @@ public struct SettingsView: View {
                         
                         Button(store.tr("Auto Detect")) {
                             Task {
-                                await BrewCLIExecutor.shared.setCustomBrewPath(nil)
+                                BrewCLIExecutor.shared.setCustomBrewPath(nil)
                                 await store.detectBrewPath()
                                 customPathText = store.brewPath
                             }

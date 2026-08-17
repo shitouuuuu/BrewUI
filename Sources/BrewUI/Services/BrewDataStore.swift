@@ -112,7 +112,7 @@ public final class BrewDataStore {
     }
     
     public func detectBrewPath() async {
-        let path = await BrewCLIExecutor.shared.getBrewPath()
+        let path = BrewCLIExecutor.shared.getBrewPath()
         self.brewPath = path
         appendLog("Detected Homebrew path: \(path)", type: .info)
     }
@@ -287,19 +287,37 @@ public final class BrewDataStore {
     // MARK: - Search Registry
     
     public func searchRegistry(query: String) async {
-        guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespaces)
+        guard !trimmedQuery.isEmpty else {
             searchResults = []
             return
         }
         
         isSearching = true
-        appendLog("Searching Homebrew registry for '\(query)'...", type: .command)
+        defer {
+            isSearching = false
+        }
+        
+        appendLog("Searching Homebrew registry for '\(trimmedQuery)'...", type: .command)
         
         do {
-            let output = try await BrewCLIExecutor.shared.runCommand(args: ["search", query])
+            // Race brew search against a 5-second timeout so the spinner never hangs
+            let output = try await withThrowingTaskGroup(of: String.self) { group in
+                group.addTask {
+                    return try await BrewCLIExecutor.shared.runCommand(args: ["search", trimmedQuery])
+                }
+                group.addTask {
+                    try await Task.sleep(for: .seconds(5))
+                    throw NSError(domain: "SearchTimeout", code: -1, userInfo: [NSLocalizedDescriptionKey: "Search operation timed out."])
+                }
+                
+                let result = try await group.next()!
+                group.cancelAll()
+                return result
+            }
+            
             let lines = output.components(separatedBy: .newlines)
             var results: [SearchResultItem] = []
-            
             var currentType: PackageType = .formula
             let installedNames = Set(allItems.map { $0.name })
             
@@ -325,10 +343,11 @@ public final class BrewDataStore {
             searchResults = results
             appendLog("Found \(results.count) search result(s).", type: .info)
         } catch {
-            appendLog("Search error: \(error.localizedDescription)", type: .error)
+            // If online search timed out or encountered lock, fallback to local installed matching
+            let localMatches = allItems.filter { $0.name.lowercased().contains(trimmedQuery.lowercased()) || $0.displayName.lowercased().contains(trimmedQuery.lowercased()) }
+            searchResults = localMatches.map { SearchResultItem(id: $0.id, name: $0.name, type: $0.type, isInstalled: true) }
+            appendLog("Search notice: \(error.localizedDescription) Showing \(searchResults.count) local match(es).", type: .warning)
         }
-        
-        isSearching = false
     }
     
     // MARK: - Command Runner Helper
