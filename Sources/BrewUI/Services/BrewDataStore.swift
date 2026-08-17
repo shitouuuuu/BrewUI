@@ -66,6 +66,9 @@ public final class BrewDataStore {
     public var outdatedItems: [UnifiedPackageItem] = []
     public var ignoredOutdatedItems: [UnifiedPackageItem] = []
     
+    public var upgradeQueue: [UnifiedPackageItem] = []
+    public var currentUpgradingItem: UnifiedPackageItem? = nil
+    
     public func ignorePackage(_ name: String) {
         ignoredOutdatedNames.insert(name)
         filterOutdatedLists()
@@ -213,13 +216,44 @@ public final class BrewDataStore {
         await refreshAllData()
     }
     
+    public func enqueueUpgrade(_ item: UnifiedPackageItem) {
+        if isTaskRunning || currentUpgradingItem != nil {
+            if !upgradeQueue.contains(where: { $0.id == item.id }) && currentUpgradingItem?.id != item.id {
+                upgradeQueue.append(item)
+                appendLog("Queued upgrade for '\(item.displayName)'. Position in queue: \(upgradeQueue.count)", type: .info)
+            }
+        } else {
+            Task {
+                await startUpgradeItem(item)
+            }
+        }
+    }
+    
+    public func removeFromQueue(_ item: UnifiedPackageItem) {
+        upgradeQueue.removeAll(where: { $0.id == item.id })
+        appendLog("Removed '\(item.displayName)' from upgrade queue.", type: .info)
+    }
+    
     public func upgradePackage(_ item: UnifiedPackageItem) async {
+        enqueueUpgrade(item)
+    }
+    
+    private func startUpgradeItem(_ item: UnifiedPackageItem) async {
+        currentUpgradingItem = item
         let cmdArgs = (item.type == .cask) ? ["upgrade", "--cask", item.name] : ["upgrade", item.name]
         await executeBrewCommand(title: "Upgrading \(item.displayName)", args: cmdArgs)
-        await refreshAllData()
+        currentUpgradingItem = nil
+        
+        if !upgradeQueue.isEmpty {
+            let nextItem = upgradeQueue.removeFirst()
+            await startUpgradeItem(nextItem)
+        } else {
+            await refreshAllData()
+        }
     }
     
     public func upgradeAll() async {
+        upgradeQueue.removeAll()
         await executeBrewCommand(title: "Upgrading All Packages", args: ["upgrade"])
         await refreshAllData()
     }

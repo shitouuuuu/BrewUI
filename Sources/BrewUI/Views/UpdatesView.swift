@@ -107,23 +107,58 @@ public struct UpdatesView: View {
                                     }
                                     
                                     HStack(spacing: 8) {
-                                        Button(action: {
-                                            Task { await store.upgradePackage(item) }
-                                        }) {
-                                            Text(store.tr("Upgrade"))
+                                        if store.currentUpgradingItem?.id == item.id {
+                                            HStack(spacing: 6) {
+                                                ProgressView()
+                                                    .controlSize(.small)
+                                                Text(store.tr("Upgrading..."))
+                                                    .font(.caption.bold())
+                                                    .foregroundColor(.orange)
+                                            }
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 5)
+                                            .background(Color.orange.opacity(0.15))
+                                            .cornerRadius(8)
+                                        } else if store.upgradeQueue.contains(where: { $0.id == item.id }) {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: "clock.fill")
+                                                    .font(.caption)
+                                                    .foregroundColor(.blue)
+                                                Text(store.tr("Waiting..."))
+                                                    .font(.caption.bold())
+                                                    .foregroundColor(.blue)
+                                                
+                                                Button(action: {
+                                                    store.removeFromQueue(item)
+                                                }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .foregroundColor(.secondary)
+                                                }
+                                                .buttonStyle(.plain)
+                                                .help(store.tr("Cancel Queue"))
+                                            }
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 5)
+                                            .background(Color.blue.opacity(0.15))
+                                            .cornerRadius(8)
+                                        } else {
+                                            Button(action: {
+                                                store.enqueueUpgrade(item)
+                                            }) {
+                                                Text(store.tr("Upgrade"))
+                                            }
+                                            .buttonStyle(.bordered)
+                                            .tint(.orange)
+                                            
+                                            Button(action: {
+                                                store.ignorePackage(item.name)
+                                            }) {
+                                                Label(store.tr("Ignore"), systemImage: "bell.slash")
+                                            }
+                                            .buttonStyle(.bordered)
+                                            .tint(.gray)
+                                            .help("Hide update notifications for this software")
                                         }
-                                        .buttonStyle(.bordered)
-                                        .tint(.orange)
-                                        .disabled(store.isTaskRunning)
-                                        
-                                        Button(action: {
-                                            store.ignorePackage(item.name)
-                                        }) {
-                                            Label(store.tr("Ignore"), systemImage: "bell.slash")
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .tint(.gray)
-                                        .help("Hide update notifications for this software")
                                     }
                                 }
                                 .padding(.vertical, 6)

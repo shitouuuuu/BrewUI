@@ -125,13 +125,21 @@ public struct PackageListView: View {
                             
                             if item.isOutdated {
                                 Button(action: {
-                                    Task { await store.upgradePackage(item) }
+                                    store.enqueueUpgrade(item)
                                 }) {
-                                    Image(systemName: "arrow.up.circle.fill")
-                                        .foregroundColor(.orange)
+                                    if store.currentUpgradingItem?.id == item.id {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                    } else if store.upgradeQueue.contains(where: { $0.id == item.id }) {
+                                        Image(systemName: "clock.fill")
+                                            .foregroundColor(.blue)
+                                    } else {
+                                        Image(systemName: "arrow.up.circle.fill")
+                                            .foregroundColor(.orange)
+                                    }
                                 }
                                 .buttonStyle(.plain)
-                                .help("Upgrade package")
+                                .help(store.upgradeQueue.contains(where: { $0.id == item.id }) ? store.tr("Waiting...") : store.tr("Upgrade"))
                             }
                         }
                         .padding(.vertical, 4)
